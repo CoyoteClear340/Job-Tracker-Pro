@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Briefcase, BellRing, ShieldAlert, Search, Plus, ActivitySquare, Bell, X, Check, CheckCheck, BarChart2 } from "lucide-react";
+import { LayoutDashboard, Briefcase, BellRing, ShieldAlert, Search, Plus, ActivitySquare, Bell, X, Check, CheckCheck, BarChart2, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useHealthCheck, useListNotifications, useMarkNotificationRead, useClearNotifications, getListNotificationsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { CommandPalette } from "@/components/command-palette";
+import { useTheme } from "@/lib/theme";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -14,6 +15,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [cmdOpen, setCmdOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -62,7 +64,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="flex h-screen w-full bg-background overflow-hidden selection:bg-primary selection:text-primary-foreground dark text-foreground">
+    <div className={`flex h-screen w-full bg-background overflow-hidden selection:bg-primary selection:text-primary-foreground text-foreground ${theme === "dark" ? "dark" : ""}`}>
       {/* Sidebar */}
       <div className="w-64 border-r border-border bg-card flex flex-col justify-between hidden md:flex shrink-0">
         <div>
@@ -236,6 +238,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </div>
               )}
             </div>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={toggleTheme}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </Button>
 
             <Link href="/applications/new">
               <Button size="sm" className="font-mono text-xs h-8 shadow-[0_0_10px_rgba(var(--primary),0.2)]">

@@ -11,6 +11,7 @@ import ApplicationDetail from "@/pages/application-detail";
 import JobAlerts from "@/pages/alerts";
 import ScamDetection from "@/pages/scam-detection";
 import Analytics from "@/pages/analytics";
+import { ThemeProvider } from "@/lib/theme";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,14 +40,16 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Router />
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
