@@ -4,8 +4,6 @@ import {
   useListApplications,
   useCreateApplication,
   getListApplicationsQueryKey,
-  ApplicationStatus,
-  Application
 } from "@workspace/api-client-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +21,9 @@ import { Search, Filter, Plus, AlertTriangle, Building2, MapPin, Globe } from "l
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+
+const APPLICATION_STATUSES = ["applied", "interview", "offer", "rejected", "ghosted"] as const;
+type ApplicationStatus = typeof APPLICATION_STATUSES[number];
 
 export default function ApplicationsList() {
   const [, setLocation] = useLocation();
@@ -78,7 +79,7 @@ export default function ApplicationsList() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">ALL_STATUSES</SelectItem>
-              {Object.values(ApplicationStatus).map(status => (
+              {APPLICATION_STATUSES.map(status => (
                 <SelectItem key={status} value={status} className="uppercase">{status}</SelectItem>
               ))}
             </SelectContent>
@@ -124,7 +125,7 @@ export default function ApplicationsList() {
                   </div>
                 </div>
                 <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between gap-3">
-                  <StatusBadge status={app.status} className="text-sm px-3 py-1" />
+                  <StatusBadge status={app.status as ApplicationStatus} className="text-sm px-3 py-1" />
                   <span className="text-xs text-muted-foreground font-mono">
                     UPDATED: {format(new Date(app.updatedAt), 'MMM d')}
                   </span>

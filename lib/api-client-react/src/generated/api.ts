@@ -22,13 +22,18 @@ import type {
   ApplicationStats,
   CreateAlertBody,
   CreateApplicationBody,
+  CreateScamRuleBody,
   GetRecentActivityParams,
   GmailSyncResult,
   GmailSyncStatus,
   HealthStatus,
   JobAlert,
   ListApplicationsParams,
+  MarkScamBody,
+  ScamRule,
+  ScanResult,
   UpdateApplicationBody,
+  UpdateScamRuleBody,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -1214,4 +1219,588 @@ export const useDeleteAlert = <
   TContext
 > => {
   return useMutation(getDeleteAlertMutationOptions(options));
+};
+
+/**
+ * @summary List all scam detection rules
+ */
+export const getListScamRulesUrl = () => {
+  return `/api/scam-rules`;
+};
+
+export const listScamRules = async (
+  options?: RequestInit,
+): Promise<ScamRule[]> => {
+  return customFetch<ScamRule[]>(getListScamRulesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListScamRulesQueryKey = () => {
+  return [`/api/scam-rules`] as const;
+};
+
+export const getListScamRulesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listScamRules>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listScamRules>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListScamRulesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listScamRules>>> = ({
+    signal,
+  }) => listScamRules({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listScamRules>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListScamRulesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listScamRules>>
+>;
+export type ListScamRulesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all scam detection rules
+ */
+
+export function useListScamRules<
+  TData = Awaited<ReturnType<typeof listScamRules>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listScamRules>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListScamRulesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a custom scam detection rule
+ */
+export const getCreateScamRuleUrl = () => {
+  return `/api/scam-rules`;
+};
+
+export const createScamRule = async (
+  createScamRuleBody: CreateScamRuleBody,
+  options?: RequestInit,
+): Promise<ScamRule> => {
+  return customFetch<ScamRule>(getCreateScamRuleUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createScamRuleBody),
+  });
+};
+
+export const getCreateScamRuleMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createScamRule>>,
+    TError,
+    { data: BodyType<CreateScamRuleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createScamRule>>,
+  TError,
+  { data: BodyType<CreateScamRuleBody> },
+  TContext
+> => {
+  const mutationKey = ["createScamRule"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createScamRule>>,
+    { data: BodyType<CreateScamRuleBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createScamRule(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateScamRuleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createScamRule>>
+>;
+export type CreateScamRuleMutationBody = BodyType<CreateScamRuleBody>;
+export type CreateScamRuleMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a custom scam detection rule
+ */
+export const useCreateScamRule = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createScamRule>>,
+    TError,
+    { data: BodyType<CreateScamRuleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createScamRule>>,
+  TError,
+  { data: BodyType<CreateScamRuleBody> },
+  TContext
+> => {
+  return useMutation(getCreateScamRuleMutationOptions(options));
+};
+
+/**
+ * @summary Toggle a scam rule active/inactive
+ */
+export const getUpdateScamRuleUrl = (id: number) => {
+  return `/api/scam-rules/${id}`;
+};
+
+export const updateScamRule = async (
+  id: number,
+  updateScamRuleBody: UpdateScamRuleBody,
+  options?: RequestInit,
+): Promise<ScamRule> => {
+  return customFetch<ScamRule>(getUpdateScamRuleUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateScamRuleBody),
+  });
+};
+
+export const getUpdateScamRuleMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateScamRule>>,
+    TError,
+    { id: number; data: BodyType<UpdateScamRuleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateScamRule>>,
+  TError,
+  { id: number; data: BodyType<UpdateScamRuleBody> },
+  TContext
+> => {
+  const mutationKey = ["updateScamRule"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateScamRule>>,
+    { id: number; data: BodyType<UpdateScamRuleBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateScamRule(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateScamRuleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateScamRule>>
+>;
+export type UpdateScamRuleMutationBody = BodyType<UpdateScamRuleBody>;
+export type UpdateScamRuleMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Toggle a scam rule active/inactive
+ */
+export const useUpdateScamRule = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateScamRule>>,
+    TError,
+    { id: number; data: BodyType<UpdateScamRuleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateScamRule>>,
+  TError,
+  { id: number; data: BodyType<UpdateScamRuleBody> },
+  TContext
+> => {
+  return useMutation(getUpdateScamRuleMutationOptions(options));
+};
+
+/**
+ * @summary Delete a custom scam rule
+ */
+export const getDeleteScamRuleUrl = (id: number) => {
+  return `/api/scam-rules/${id}`;
+};
+
+export const deleteScamRule = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteScamRuleUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteScamRuleMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteScamRule>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteScamRule>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteScamRule"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteScamRule>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteScamRule(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteScamRuleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteScamRule>>
+>;
+
+export type DeleteScamRuleMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a custom scam rule
+ */
+export const useDeleteScamRule = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteScamRule>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteScamRule>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteScamRuleMutationOptions(options));
+};
+
+/**
+ * @summary Re-scan all applications against current rules
+ */
+export const getScanApplicationsUrl = () => {
+  return `/api/scam-rules/scan`;
+};
+
+export const scanApplications = async (
+  options?: RequestInit,
+): Promise<ScanResult> => {
+  return customFetch<ScanResult>(getScanApplicationsUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getScanApplicationsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof scanApplications>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof scanApplications>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["scanApplications"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof scanApplications>>,
+    void
+  > = () => {
+    return scanApplications(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ScanApplicationsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof scanApplications>>
+>;
+
+export type ScanApplicationsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Re-scan all applications against current rules
+ */
+export const useScanApplications = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof scanApplications>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof scanApplications>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getScanApplicationsMutationOptions(options));
+};
+
+/**
+ * @summary Mark a flagged application as safe (not a scam)
+ */
+export const getMarkApplicationSafeUrl = (id: number) => {
+  return `/api/applications/${id}/mark-safe`;
+};
+
+export const markApplicationSafe = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Application> => {
+  return customFetch<Application>(getMarkApplicationSafeUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getMarkApplicationSafeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markApplicationSafe>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof markApplicationSafe>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["markApplicationSafe"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof markApplicationSafe>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return markApplicationSafe(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MarkApplicationSafeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof markApplicationSafe>>
+>;
+
+export type MarkApplicationSafeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Mark a flagged application as safe (not a scam)
+ */
+export const useMarkApplicationSafe = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markApplicationSafe>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof markApplicationSafe>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getMarkApplicationSafeMutationOptions(options));
+};
+
+/**
+ * @summary Mark an application as a confirmed scam
+ */
+export const getMarkApplicationScamUrl = (id: number) => {
+  return `/api/applications/${id}/mark-scam`;
+};
+
+export const markApplicationScam = async (
+  id: number,
+  markScamBody: MarkScamBody,
+  options?: RequestInit,
+): Promise<Application> => {
+  return customFetch<Application>(getMarkApplicationScamUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(markScamBody),
+  });
+};
+
+export const getMarkApplicationScamMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markApplicationScam>>,
+    TError,
+    { id: number; data: BodyType<MarkScamBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof markApplicationScam>>,
+  TError,
+  { id: number; data: BodyType<MarkScamBody> },
+  TContext
+> => {
+  const mutationKey = ["markApplicationScam"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof markApplicationScam>>,
+    { id: number; data: BodyType<MarkScamBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return markApplicationScam(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MarkApplicationScamMutationResult = NonNullable<
+  Awaited<ReturnType<typeof markApplicationScam>>
+>;
+export type MarkApplicationScamMutationBody = BodyType<MarkScamBody>;
+export type MarkApplicationScamMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Mark an application as a confirmed scam
+ */
+export const useMarkApplicationScam = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markApplicationScam>>,
+    TError,
+    { id: number; data: BodyType<MarkScamBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof markApplicationScam>>,
+  TError,
+  { id: number; data: BodyType<MarkScamBody> },
+  TContext
+> => {
+  return useMutation(getMarkApplicationScamMutationOptions(options));
 };

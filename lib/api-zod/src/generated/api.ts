@@ -246,3 +246,112 @@ export const CreateAlertBody = zod.object({
 export const DeleteAlertParams = zod.object({
   id: zod.coerce.number(),
 });
+
+/**
+ * @summary List all scam detection rules
+ */
+export const ListScamRulesResponseItem = zod.object({
+  id: zod.number(),
+  pattern: zod.string(),
+  description: zod.string(),
+  ruleType: zod.enum(["builtin", "custom"]),
+  active: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+export const ListScamRulesResponse = zod.array(ListScamRulesResponseItem);
+
+/**
+ * @summary Create a custom scam detection rule
+ */
+export const CreateScamRuleBody = zod.object({
+  pattern: zod.string(),
+  description: zod.string(),
+});
+
+/**
+ * @summary Toggle a scam rule active/inactive
+ */
+export const UpdateScamRuleParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateScamRuleBody = zod.object({
+  active: zod.boolean().optional(),
+  description: zod.string().optional(),
+});
+
+export const UpdateScamRuleResponse = zod.object({
+  id: zod.number(),
+  pattern: zod.string(),
+  description: zod.string(),
+  ruleType: zod.enum(["builtin", "custom"]),
+  active: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete a custom scam rule
+ */
+export const DeleteScamRuleParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Re-scan all applications against current rules
+ */
+export const ScanApplicationsResponse = zod.object({
+  scanned: zod.number(),
+  flagged: zod.number(),
+  cleared: zod.number(),
+  message: zod.string(),
+});
+
+/**
+ * @summary Mark a flagged application as safe (not a scam)
+ */
+export const MarkApplicationSafeParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const MarkApplicationSafeResponse = zod.object({
+  id: zod.number(),
+  company: zod.string(),
+  role: zod.string(),
+  status: zod.enum(["applied", "interview", "offer", "rejected", "ghosted"]),
+  source: zod.string().nullish(),
+  location: zod.string().nullish(),
+  appliedAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+  notes: zod.string().nullish(),
+  isScam: zod.boolean(),
+  scamReason: zod.string().nullish(),
+  emailMessageId: zod.string().nullish(),
+  url: zod.string().nullish(),
+});
+
+/**
+ * @summary Mark an application as a confirmed scam
+ */
+export const MarkApplicationScamParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const MarkApplicationScamBody = zod.object({
+  reason: zod.string().nullish(),
+});
+
+export const MarkApplicationScamResponse = zod.object({
+  id: zod.number(),
+  company: zod.string(),
+  role: zod.string(),
+  status: zod.enum(["applied", "interview", "offer", "rejected", "ghosted"]),
+  source: zod.string().nullish(),
+  location: zod.string().nullish(),
+  appliedAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+  notes: zod.string().nullish(),
+  isScam: zod.boolean(),
+  scamReason: zod.string().nullish(),
+  emailMessageId: zod.string().nullish(),
+  url: zod.string().nullish(),
+});

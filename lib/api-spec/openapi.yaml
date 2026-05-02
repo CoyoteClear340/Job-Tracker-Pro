@@ -16,6 +16,8 @@ tags:
     description: Gmail sync operations
   - name: alerts
     description: Job alert operations
+  - name: scam
+    description: Scam detection rule operations
 paths:
   /healthz:
     get:
@@ -265,6 +267,133 @@ paths:
         "204":
           description: Deleted
 
+  /scam-rules:
+    get:
+      operationId: listScamRules
+      tags: [scam]
+      summary: List all scam detection rules
+      responses:
+        "200":
+          description: List of scam rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScamRule"
+    post:
+      operationId: createScamRule
+      tags: [scam]
+      summary: Create a custom scam detection rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateScamRuleBody"
+      responses:
+        "201":
+          description: Created rule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScamRule"
+
+  /scam-rules/{id}:
+    patch:
+      operationId: updateScamRule
+      tags: [scam]
+      summary: Toggle a scam rule active/inactive
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateScamRuleBody"
+      responses:
+        "200":
+          description: Updated rule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScamRule"
+    delete:
+      operationId: deleteScamRule
+      tags: [scam]
+      summary: Delete a custom scam rule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /scam-rules/scan:
+    post:
+      operationId: scanApplications
+      tags: [scam]
+      summary: Re-scan all applications against current rules
+      responses:
+        "200":
+          description: Scan result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanResult"
+
+  /applications/{id}/mark-safe:
+    post:
+      operationId: markApplicationSafe
+      tags: [applications]
+      summary: Mark a flagged application as safe (not a scam)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+
+  /applications/{id}/mark-scam:
+    post:
+      operationId: markApplicationScam
+      tags: [applications]
+      summary: Mark an application as a confirmed scam
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarkScamBody"
+      responses:
+        "200":
+          description: Updated application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+
 components:
   schemas:
     HealthStatus:
@@ -496,3 +625,71 @@ components:
           nullable: true
       required:
         - keyword
+
+    ScamRule:
+      type: object
+      properties:
+        id:
+          type: integer
+        pattern:
+          type: string
+        description:
+          type: string
+        ruleType:
+          type: string
+          enum: [builtin, custom]
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - pattern
+        - description
+        - ruleType
+        - active
+        - createdAt
+
+    CreateScamRuleBody:
+      type: object
+      properties:
+        pattern:
+          type: string
+        description:
+          type: string
+      required:
+        - pattern
+        - description
+
+    UpdateScamRuleBody:
+      type: object
+      properties:
+        active:
+          type: boolean
+        description:
+          type: string
+
+    ScanResult:
+      type: object
+      properties:
+        scanned:
+          type: integer
+        flagged:
+          type: integer
+        cleared:
+          type: integer
+        message:
+          type: string
+      required:
+        - scanned
+        - flagged
+        - cleared
+        - message
+
+    MarkScamBody:
+      type: object
+      properties:
+        reason:
+          type: string
+          nullable: true

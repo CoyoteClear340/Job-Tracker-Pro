@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { 
   useGetApplication,
@@ -9,7 +9,6 @@ import {
   getGetApplicationQueryKey,
   getListApplicationsQueryKey,
   getGetApplicationStatsQueryKey,
-  ApplicationStatus
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,6 +32,9 @@ import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const APPLICATION_STATUSES = ["applied", "interview", "offer", "rejected", "ghosted"] as const;
+type ApplicationStatus = typeof APPLICATION_STATUSES[number];
 
 export default function ApplicationDetail() {
   const params = useParams();
@@ -95,7 +97,7 @@ export default function ApplicationDetail() {
   const [formData, setFormData] = useState({
     company: "",
     role: "",
-    status: ApplicationStatus.applied,
+    status: "applied" as ApplicationStatus,
     location: "",
     source: "",
     url: ""
@@ -165,7 +167,7 @@ export default function ApplicationDetail() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.values(ApplicationStatus).map(status => (
+                      {APPLICATION_STATUSES.map(status => (
                         <SelectItem key={status} value={status} className="uppercase font-mono">{status}</SelectItem>
                       ))}
                     </SelectContent>
@@ -280,7 +282,7 @@ export default function ApplicationDetail() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.values(ApplicationStatus).map(status => (
+                      {APPLICATION_STATUSES.map(status => (
                         <SelectItem key={status} value={status} className="uppercase font-mono">{status}</SelectItem>
                       ))}
                     </SelectContent>

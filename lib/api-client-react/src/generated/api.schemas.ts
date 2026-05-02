@@ -127,6 +127,44 @@ export interface CreateAlertBody {
   location?: string | null;
 }
 
+export type ScamRuleRuleType =
+  (typeof ScamRuleRuleType)[keyof typeof ScamRuleRuleType];
+
+export const ScamRuleRuleType = {
+  builtin: "builtin",
+  custom: "custom",
+} as const;
+
+export interface ScamRule {
+  id: number;
+  pattern: string;
+  description: string;
+  ruleType: ScamRuleRuleType;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface CreateScamRuleBody {
+  pattern: string;
+  description: string;
+}
+
+export interface UpdateScamRuleBody {
+  active?: boolean;
+  description?: string;
+}
+
+export interface ScanResult {
+  scanned: number;
+  flagged: number;
+  cleared: number;
+  message: string;
+}
+
+export interface MarkScamBody {
+  reason?: string | null;
+}
+
 export type ListApplicationsParams = {
   status?: ListApplicationsStatus;
   search?: string;

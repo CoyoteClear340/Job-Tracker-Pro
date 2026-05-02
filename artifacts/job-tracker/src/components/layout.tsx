@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Briefcase, BellRing, Settings, Search, Plus, ActivitySquare } from "lucide-react";
+import { LayoutDashboard, Briefcase, BellRing, Settings, Search, Plus, ActivitySquare, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useHealthCheck } from "@workspace/api-client-react";
@@ -13,6 +13,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Applications", href: "/applications", icon: Briefcase },
     { name: "Job Alerts", href: "/alerts", icon: BellRing },
+    { name: "Scam Rules", href: "/scam-detection", icon: ShieldAlert },
   ];
 
   return (

@@ -9,6 +9,7 @@ import Dashboard from "@/pages/dashboard";
 import ApplicationsList from "@/pages/applications";
 import ApplicationDetail from "@/pages/application-detail";
 import JobAlerts from "@/pages/alerts";
+import ScamDetection from "@/pages/scam-detection";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +28,7 @@ function Router() {
         <Route path="/applications" component={ApplicationsList} />
         <Route path="/applications/:id" component={ApplicationDetail} />
         <Route path="/alerts" component={JobAlerts} />
+        <Route path="/scam-detection" component={ScamDetection} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
