@@ -26,6 +26,7 @@ import type {
   BulkActionResult,
   CreateAlertBody,
   CreateApplicationBody,
+  CreateReminderBody,
   CreateScamRuleBody,
   EmailConfigStatus,
   GetNeedsAttentionParams,
@@ -36,13 +37,16 @@ import type {
   JobAlert,
   ListApplicationsParams,
   ListNotificationsParams,
+  ListRemindersParams,
   MarkScamBody,
   NeedsAttentionItem,
+  Reminder,
   ScamRule,
   ScanResult,
   SendTestEmail200,
   SendTestEmailBody,
   UpdateApplicationBody,
+  UpdateReminderBody,
   UpdateScamRuleBody,
 } from "./api.schemas";
 
@@ -484,6 +488,357 @@ export function useGetRecentActivity<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary List upcoming (and optionally done) reminders
+ */
+export const getListRemindersUrl = (params?: ListRemindersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/reminders?${stringifiedParams}`
+    : `/api/reminders`;
+};
+
+export const listReminders = async (
+  params?: ListRemindersParams,
+  options?: RequestInit,
+): Promise<Reminder[]> => {
+  return customFetch<Reminder[]>(getListRemindersUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListRemindersQueryKey = (params?: ListRemindersParams) => {
+  return [`/api/reminders`, ...(params ? [params] : [])] as const;
+};
+
+export const getListRemindersQueryOptions = <
+  TData = Awaited<ReturnType<typeof listReminders>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListRemindersParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listReminders>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListRemindersQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listReminders>>> = ({
+    signal,
+  }) => listReminders(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listReminders>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListRemindersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listReminders>>
+>;
+export type ListRemindersQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List upcoming (and optionally done) reminders
+ */
+
+export function useListReminders<
+  TData = Awaited<ReturnType<typeof listReminders>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListRemindersParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listReminders>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListRemindersQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a follow-up reminder
+ */
+export const getCreateReminderUrl = () => {
+  return `/api/reminders`;
+};
+
+export const createReminder = async (
+  createReminderBody: CreateReminderBody,
+  options?: RequestInit,
+): Promise<Reminder> => {
+  return customFetch<Reminder>(getCreateReminderUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createReminderBody),
+  });
+};
+
+export const getCreateReminderMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createReminder>>,
+    TError,
+    { data: BodyType<CreateReminderBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createReminder>>,
+  TError,
+  { data: BodyType<CreateReminderBody> },
+  TContext
+> => {
+  const mutationKey = ["createReminder"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createReminder>>,
+    { data: BodyType<CreateReminderBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createReminder(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateReminderMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createReminder>>
+>;
+export type CreateReminderMutationBody = BodyType<CreateReminderBody>;
+export type CreateReminderMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a follow-up reminder
+ */
+export const useCreateReminder = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createReminder>>,
+    TError,
+    { data: BodyType<CreateReminderBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createReminder>>,
+  TError,
+  { data: BodyType<CreateReminderBody> },
+  TContext
+> => {
+  return useMutation(getCreateReminderMutationOptions(options));
+};
+
+/**
+ * @summary Mark a reminder done or update its fields
+ */
+export const getUpdateReminderUrl = (id: number) => {
+  return `/api/reminders/${id}`;
+};
+
+export const updateReminder = async (
+  id: number,
+  updateReminderBody: UpdateReminderBody,
+  options?: RequestInit,
+): Promise<Reminder> => {
+  return customFetch<Reminder>(getUpdateReminderUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateReminderBody),
+  });
+};
+
+export const getUpdateReminderMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateReminder>>,
+    TError,
+    { id: number; data: BodyType<UpdateReminderBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateReminder>>,
+  TError,
+  { id: number; data: BodyType<UpdateReminderBody> },
+  TContext
+> => {
+  const mutationKey = ["updateReminder"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateReminder>>,
+    { id: number; data: BodyType<UpdateReminderBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateReminder(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateReminderMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateReminder>>
+>;
+export type UpdateReminderMutationBody = BodyType<UpdateReminderBody>;
+export type UpdateReminderMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Mark a reminder done or update its fields
+ */
+export const useUpdateReminder = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateReminder>>,
+    TError,
+    { id: number; data: BodyType<UpdateReminderBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateReminder>>,
+  TError,
+  { id: number; data: BodyType<UpdateReminderBody> },
+  TContext
+> => {
+  return useMutation(getUpdateReminderMutationOptions(options));
+};
+
+/**
+ * @summary Delete a reminder
+ */
+export const getDeleteReminderUrl = (id: number) => {
+  return `/api/reminders/${id}`;
+};
+
+export const deleteReminder = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteReminderUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteReminderMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteReminder>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteReminder>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteReminder"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteReminder>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteReminder(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteReminderMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteReminder>>
+>;
+
+export type DeleteReminderMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a reminder
+ */
+export const useDeleteReminder = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteReminder>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteReminder>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteReminderMutationOptions(options));
+};
 
 /**
  * @summary Bulk update, mark scam, or delete applications

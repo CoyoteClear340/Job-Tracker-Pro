@@ -36,6 +36,29 @@ export interface Application {
   url?: string | null;
 }
 
+export interface Reminder {
+  id: number;
+  applicationId: number;
+  dueAt: string;
+  note?: string | null;
+  done: boolean;
+  createdAt: string;
+  company?: string | null;
+  role?: string | null;
+}
+
+export interface CreateReminderBody {
+  applicationId: number;
+  dueAt: string;
+  note?: string | null;
+}
+
+export interface UpdateReminderBody {
+  done?: boolean;
+  dueAt?: string;
+  note?: string | null;
+}
+
 export type BulkActionBodyAction =
   (typeof BulkActionBodyAction)[keyof typeof BulkActionBodyAction];
 
@@ -280,6 +303,11 @@ export const ListApplicationsStatus = {
 
 export type GetRecentActivityParams = {
   limit?: number;
+};
+
+export type ListRemindersParams = {
+  applicationId?: number;
+  includeDone?: boolean;
 };
 
 export type GetNeedsAttentionParams = {

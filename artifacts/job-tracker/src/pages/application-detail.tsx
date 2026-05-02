@@ -6,9 +6,14 @@ import {
   useDeleteApplication,
   useAddApplicationNote,
   useCreateApplication,
+  useListReminders,
+  useCreateReminder,
+  useUpdateReminder,
+  useDeleteReminder,
   getGetApplicationQueryKey,
   getListApplicationsQueryKey,
   getGetApplicationStatsQueryKey,
+  getListRemindersQueryKey,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,8 +32,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/status-badge";
-import { ArrowLeft, Building2, MapPin, Globe, ExternalLink, Calendar, AlertTriangle, Save, Trash2, Plus } from "lucide-react";
-import { format } from "date-fns";
+import { ArrowLeft, MapPin, Globe, ExternalLink, Calendar, AlertTriangle, Save, Trash2, Plus, Bell, BellOff, Check, X } from "lucide-react";
+import { format, isPast, isToday, isTomorrow } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -50,6 +55,8 @@ export default function ApplicationDetail() {
   });
 
   const [noteContent, setNoteContent] = useState("");
+  const [reminderDate, setReminderDate] = useState("");
+  const [reminderNote, setReminderNote] = useState("");
 
   const updateApp = useUpdateApplication({
     mutation: {
@@ -81,6 +88,35 @@ export default function ApplicationDetail() {
         queryClient.invalidateQueries({ queryKey: getGetApplicationQueryKey(id) });
       }
     }
+  });
+
+  const { data: reminders } = useListReminders(
+    { applicationId: id, includeDone: true },
+    { query: { enabled: !isNew && !!id } }
+  );
+
+  const createReminder = useCreateReminder({
+    mutation: {
+      onSuccess: () => {
+        setReminderDate("");
+        setReminderNote("");
+        toast({ title: "Reminder set" });
+        queryClient.invalidateQueries({ queryKey: getListRemindersQueryKey() });
+      },
+      onError: () => toast({ title: "Failed to set reminder", variant: "destructive" }),
+    },
+  });
+
+  const updateReminder = useUpdateReminder({
+    mutation: {
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: getListRemindersQueryKey() }),
+    },
+  });
+
+  const deleteReminder = useDeleteReminder({
+    mutation: {
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: getListRemindersQueryKey() }),
+    },
   });
 
   const createApp = useCreateApplication({
@@ -357,6 +393,104 @@ export default function ApplicationDetail() {
         </div>
 
         <div className="space-y-6">
+          {/* Reminders Card */}
+          <Card className="border-primary/20">
+            <CardHeader className="pb-3 border-b border-border flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="font-mono text-sm uppercase flex items-center gap-2">
+                  <Bell className="h-4 w-4 text-primary" /> Reminders
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">Follow-up scheduler</CardDescription>
+              </div>
+              <span className="text-xs font-mono text-muted-foreground">
+                {reminders?.filter(r => !r.done).length ?? 0} pending
+              </span>
+            </CardHeader>
+            <CardContent className="p-4 space-y-4">
+              {/* Create reminder form */}
+              <div className="space-y-2">
+                <label className="text-xs font-mono text-muted-foreground">DUE_DATE</label>
+                <Input
+                  type="datetime-local"
+                  value={reminderDate}
+                  onChange={(e) => setReminderDate(e.target.value)}
+                  className="font-mono text-xs bg-secondary/50 h-8"
+                />
+                <Input
+                  placeholder="Optional note..."
+                  value={reminderNote}
+                  onChange={(e) => setReminderNote(e.target.value)}
+                  className="font-mono text-xs bg-secondary/50 h-8"
+                />
+                <Button
+                  size="sm"
+                  className="w-full font-mono text-xs h-8"
+                  disabled={!reminderDate || createReminder.isPending}
+                  onClick={() =>
+                    createReminder.mutate({
+                      data: {
+                        applicationId: id,
+                        dueAt: new Date(reminderDate).toISOString(),
+                        note: reminderNote || null,
+                      },
+                    })
+                  }
+                >
+                  <Bell className="h-3.5 w-3.5 mr-2" />
+                  {createReminder.isPending ? "SAVING..." : "SET_REMINDER"}
+                </Button>
+              </div>
+
+              {/* Reminder list */}
+              {reminders && reminders.length > 0 && (
+                <div className="space-y-2 pt-1 border-t border-border">
+                  {reminders.map((r) => {
+                    const due = new Date(r.dueAt);
+                    const overdue = isPast(due) && !r.done;
+                    const today = isToday(due);
+                    const tomorrow = isTomorrow(due);
+                    const label = today ? "Today" : tomorrow ? "Tomorrow" : format(due, "MMM d, yyyy · HH:mm");
+                    return (
+                      <div
+                        key={r.id}
+                        className={`flex items-start gap-2 p-2.5 rounded-md border text-xs transition-opacity ${
+                          r.done
+                            ? "opacity-40 bg-muted/30 border-border/50"
+                            : overdue
+                            ? "border-destructive/30 bg-destructive/5"
+                            : today
+                            ? "border-yellow-500/30 bg-yellow-500/5"
+                            : "border-border bg-card"
+                        }`}
+                      >
+                        <button
+                          className={`shrink-0 mt-0.5 h-4 w-4 rounded border flex items-center justify-center transition-colors ${
+                            r.done ? "bg-primary/20 border-primary/40 text-primary" : "border-muted-foreground hover:border-primary"
+                          }`}
+                          onClick={() => updateReminder.mutate({ id: r.id, data: { done: !r.done } })}
+                        >
+                          {r.done && <Check className="h-2.5 w-2.5" />}
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <p className={`font-mono font-semibold leading-none ${overdue ? "text-destructive" : today ? "text-yellow-500" : "text-foreground"}`}>
+                            {label}
+                          </p>
+                          {r.note && <p className="text-muted-foreground mt-1 leading-relaxed">{r.note}</p>}
+                        </div>
+                        <button
+                          className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+                          onClick={() => deleteReminder.mutate({ id: r.id })}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="pb-3 border-b border-border">
               <CardTitle className="font-mono text-sm uppercase">Timeline</CardTitle>

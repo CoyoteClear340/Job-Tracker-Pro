@@ -104,6 +104,66 @@ export const GetRecentActivityResponse = zod.array(
 );
 
 /**
+ * @summary List upcoming (and optionally done) reminders
+ */
+export const ListRemindersQueryParams = zod.object({
+  applicationId: zod.coerce.number().optional(),
+  includeDone: zod.coerce.boolean().optional(),
+});
+
+export const ListRemindersResponseItem = zod.object({
+  id: zod.number(),
+  applicationId: zod.number(),
+  dueAt: zod.coerce.date(),
+  note: zod.string().nullish(),
+  done: zod.boolean(),
+  createdAt: zod.coerce.date(),
+  company: zod.string().nullish(),
+  role: zod.string().nullish(),
+});
+export const ListRemindersResponse = zod.array(ListRemindersResponseItem);
+
+/**
+ * @summary Create a follow-up reminder
+ */
+export const CreateReminderBody = zod.object({
+  applicationId: zod.number(),
+  dueAt: zod.coerce.date(),
+  note: zod.string().nullish(),
+});
+
+/**
+ * @summary Mark a reminder done or update its fields
+ */
+export const UpdateReminderParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateReminderBody = zod.object({
+  done: zod.boolean().optional(),
+  dueAt: zod.coerce.date().optional(),
+  note: zod.string().nullish(),
+});
+
+export const UpdateReminderResponse = zod.object({
+  id: zod.number(),
+  applicationId: zod.number(),
+  dueAt: zod.coerce.date(),
+  note: zod.string().nullish(),
+  done: zod.boolean(),
+  createdAt: zod.coerce.date(),
+  company: zod.string().nullish(),
+  role: zod.string().nullish(),
+});
+
+/**
+ * @summary Delete a reminder
+ */
+export const DeleteReminderParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
  * @summary Bulk update, mark scam, or delete applications
  */
 export const BulkUpdateApplicationsBody = zod.object({

@@ -6,15 +6,18 @@ import {
   useGetGmailSyncStatus,
   useTriggerGmailSync,
   useGetNeedsAttention,
+  useListReminders,
+  useUpdateReminder,
   getGetGmailSyncStatusQueryKey,
   getGetRecentActivityQueryKey,
   getGetApplicationStatsQueryKey,
+  getListRemindersQueryKey,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RefreshCw, Activity, Mail, Inbox, TrendingUp, AlertTriangle, Clock, ChevronRight, Zap } from "lucide-react";
+import { RefreshCw, Activity, Mail, Inbox, TrendingUp, AlertTriangle, Clock, ChevronRight, Zap, Bell, Check } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { StatusBadge } from "@/components/status-badge";
@@ -27,6 +30,15 @@ export default function Dashboard() {
   const [staleDays, setStaleDays] = useState(7);
 
   const { data: stats, isLoading: statsLoading } = useGetApplicationStats();
+  const { data: upcomingReminders } = useListReminders(
+    { includeDone: false },
+    { query: { refetchInterval: 60000 } }
+  );
+  const markReminderDone = useUpdateReminder({
+    mutation: {
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: getListRemindersQueryKey() }),
+    },
+  });
   const { data: recentApps, isLoading: recentLoading } = useGetRecentActivity({ limit: 5 });
   const { data: gmailStatus } = useGetGmailSyncStatus();
   const { data: needsAttention, isLoading: attentionLoading } = useGetNeedsAttention(
@@ -205,6 +217,75 @@ export default function Dashboard() {
                 ))}
               </div>
             ) : null}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Upcoming Reminders */}
+      {upcomingReminders && upcomingReminders.length > 0 && (
+        <Card className="border-primary/20 shadow-[0_0_20px_rgba(var(--primary),0.04)]">
+          <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <Bell className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="font-mono text-sm uppercase text-primary">Upcoming_Reminders</CardTitle>
+                <CardDescription>Scheduled follow-ups across all applications</CardDescription>
+              </div>
+            </div>
+            <span className="font-mono text-xs text-muted-foreground border border-border rounded px-2 py-1">
+              {upcomingReminders.length} pending
+            </span>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border">
+              {upcomingReminders.slice(0, 6).map((r) => {
+                const due = new Date(r.dueAt);
+                const overdue = isPast(due);
+                const today = isToday(due);
+                const tomorrow = isTomorrow(due);
+                const label = today ? "Today" : tomorrow ? "Tomorrow" : formatDistanceToNow(due, { addSuffix: true });
+                return (
+                  <div
+                    key={r.id}
+                    className="flex items-center gap-4 px-5 py-3 hover:bg-secondary/40 transition-colors group cursor-pointer"
+                    onClick={() => setLocation(`/applications/${r.applicationId}`)}
+                  >
+                    <div className={`shrink-0 font-mono text-xs font-bold px-2 py-1 rounded border ${
+                      overdue ? "text-destructive border-destructive/30 bg-destructive/5" :
+                      today ? "text-yellow-500 border-yellow-500/30 bg-yellow-500/5" :
+                      "text-primary border-primary/20 bg-primary/5"
+                    }`}>
+                      {overdue ? "OVERDUE" : today ? "TODAY" : tomorrow ? "TOMORROW" : label.toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm group-hover:text-primary transition-colors truncate">
+                        {r.company ?? "Unknown"}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {r.note ?? r.role ?? format(due, "MMM d, yyyy · HH:mm")}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs font-mono text-muted-foreground hidden sm:block">
+                        {format(due, "MMM d, HH:mm")}
+                      </span>
+                      <button
+                        className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 rounded border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markReminderDone.mutate({ id: r.id, data: { done: true } });
+                        }}
+                        title="Mark done"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
       )}
