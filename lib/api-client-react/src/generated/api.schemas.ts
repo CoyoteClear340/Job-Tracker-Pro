@@ -36,6 +36,18 @@ export interface Application {
   url?: string | null;
 }
 
+export interface NeedsAttentionItem {
+  id: number;
+  company: string;
+  role: string;
+  status: string;
+  location?: string | null;
+  updatedAt: string;
+  appliedAt: string;
+  daysSinceUpdate: number;
+  isScam: boolean;
+}
+
 export type CreateApplicationBodyStatus =
   (typeof CreateApplicationBodyStatus)[keyof typeof CreateApplicationBodyStatus];
 
@@ -204,6 +216,10 @@ export const ListApplicationsStatus = {
 
 export type GetRecentActivityParams = {
   limit?: number;
+};
+
+export type GetNeedsAttentionParams = {
+  staleDays?: number;
 };
 
 export type ListNotificationsParams = {

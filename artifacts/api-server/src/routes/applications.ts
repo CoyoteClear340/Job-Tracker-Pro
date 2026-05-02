@@ -107,6 +107,38 @@ router.get("/applications/recent", async (req, res) => {
   res.json(apps.map(formatApplication));
 });
 
+router.get("/applications/needs-attention", async (req, res) => {
+  const staleDays = Math.max(1, parseInt(String(req.query["staleDays"] ?? "7"), 10) || 7);
+  const cutoff = new Date(Date.now() - staleDays * 24 * 60 * 60 * 1000);
+
+  const apps = await db
+    .select()
+    .from(applicationsTable)
+    .orderBy(applicationsTable.updatedAt);
+
+  const stale = apps.filter(
+    (a) =>
+      a.updatedAt <= cutoff &&
+      a.status !== "offer" &&
+      a.status !== "rejected"
+  );
+
+  const now = Date.now();
+  res.json(
+    stale.map((a) => ({
+      id: a.id,
+      company: a.company,
+      role: a.role,
+      status: a.status,
+      location: a.location,
+      updatedAt: a.updatedAt.toISOString(),
+      appliedAt: a.appliedAt.toISOString(),
+      daysSinceUpdate: Math.floor((now - a.updatedAt.getTime()) / (24 * 60 * 60 * 1000)),
+      isScam: a.isScam,
+    }))
+  );
+});
+
 router.get("/applications/:id", async (req, res) => {
   const params = GetApplicationParams.safeParse({ id: Number(req.params.id) });
   if (!params.success) {

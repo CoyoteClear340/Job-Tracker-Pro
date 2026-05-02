@@ -114,6 +114,27 @@ paths:
                 items:
                   $ref: "#/components/schemas/Application"
 
+  /applications/needs-attention:
+    get:
+      operationId: getNeedsAttention
+      tags: [applications]
+      summary: Get applications that need follow-up (stale status)
+      parameters:
+        - name: staleDays
+          in: query
+          schema:
+            type: integer
+            default: 7
+      responses:
+        "200":
+          description: Applications needing follow-up
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NeedsAttentionItem"
+
   /applications/{id}:
     get:
       operationId: getApplication
@@ -539,6 +560,40 @@ components:
         - status
         - appliedAt
         - updatedAt
+        - isScam
+
+    NeedsAttentionItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        company:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+        location:
+          type: string
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+        appliedAt:
+          type: string
+          format: date-time
+        daysSinceUpdate:
+          type: integer
+        isScam:
+          type: boolean
+      required:
+        - id
+        - company
+        - role
+        - status
+        - updatedAt
+        - appliedAt
+        - daysSinceUpdate
         - isScam
 
     CreateApplicationBody:

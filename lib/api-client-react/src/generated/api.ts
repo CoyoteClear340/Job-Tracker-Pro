@@ -25,6 +25,7 @@ import type {
   CreateApplicationBody,
   CreateScamRuleBody,
   EmailConfigStatus,
+  GetNeedsAttentionParams,
   GetRecentActivityParams,
   GmailSyncResult,
   GmailSyncStatus,
@@ -33,6 +34,7 @@ import type {
   ListApplicationsParams,
   ListNotificationsParams,
   MarkScamBody,
+  NeedsAttentionItem,
   ScamRule,
   ScanResult,
   SendTestEmail200,
@@ -472,6 +474,106 @@ export function useGetRecentActivity<
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetRecentActivityQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get applications that need follow-up (stale status)
+ */
+export const getGetNeedsAttentionUrl = (params?: GetNeedsAttentionParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/applications/needs-attention?${stringifiedParams}`
+    : `/api/applications/needs-attention`;
+};
+
+export const getNeedsAttention = async (
+  params?: GetNeedsAttentionParams,
+  options?: RequestInit,
+): Promise<NeedsAttentionItem[]> => {
+  return customFetch<NeedsAttentionItem[]>(getGetNeedsAttentionUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetNeedsAttentionQueryKey = (
+  params?: GetNeedsAttentionParams,
+) => {
+  return [
+    `/api/applications/needs-attention`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getGetNeedsAttentionQueryOptions = <
+  TData = Awaited<ReturnType<typeof getNeedsAttention>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetNeedsAttentionParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getNeedsAttention>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetNeedsAttentionQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getNeedsAttention>>
+  > = ({ signal }) => getNeedsAttention(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getNeedsAttention>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetNeedsAttentionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getNeedsAttention>>
+>;
+export type GetNeedsAttentionQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get applications that need follow-up (stale status)
+ */
+
+export function useGetNeedsAttention<
+  TData = Awaited<ReturnType<typeof getNeedsAttention>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetNeedsAttentionParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getNeedsAttention>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetNeedsAttentionQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

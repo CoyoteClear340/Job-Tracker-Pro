@@ -104,6 +104,32 @@ export const GetRecentActivityResponse = zod.array(
 );
 
 /**
+ * @summary Get applications that need follow-up (stale status)
+ */
+export const getNeedsAttentionQueryStaleDaysDefault = 7;
+
+export const GetNeedsAttentionQueryParams = zod.object({
+  staleDays: zod.coerce
+    .number()
+    .default(getNeedsAttentionQueryStaleDaysDefault),
+});
+
+export const GetNeedsAttentionResponseItem = zod.object({
+  id: zod.number(),
+  company: zod.string(),
+  role: zod.string(),
+  status: zod.string(),
+  location: zod.string().nullish(),
+  updatedAt: zod.coerce.date(),
+  appliedAt: zod.coerce.date(),
+  daysSinceUpdate: zod.number(),
+  isScam: zod.boolean(),
+});
+export const GetNeedsAttentionResponse = zod.array(
+  GetNeedsAttentionResponseItem,
+);
+
+/**
  * @summary Get a single application
  */
 export const GetApplicationParams = zod.object({
