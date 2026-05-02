@@ -28,6 +28,8 @@ import type {
   CreateApplicationBody,
   CreateReminderBody,
   CreateScamRuleBody,
+  DigestPreview,
+  DigestResult,
   EmailConfigStatus,
   GetNeedsAttentionParams,
   GetRecentActivityParams,
@@ -481,6 +483,163 @@ export function useGetRecentActivity<
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetRecentActivityQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Manually trigger the reminder email digest
+ */
+export const getSendReminderDigestUrl = () => {
+  return `/api/notifications/send-reminder-digest`;
+};
+
+export const sendReminderDigest = async (
+  options?: RequestInit,
+): Promise<DigestResult> => {
+  return customFetch<DigestResult>(getSendReminderDigestUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getSendReminderDigestMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendReminderDigest>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sendReminderDigest>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["sendReminderDigest"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sendReminderDigest>>,
+    void
+  > = () => {
+    return sendReminderDigest(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SendReminderDigestMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sendReminderDigest>>
+>;
+
+export type SendReminderDigestMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Manually trigger the reminder email digest
+ */
+export const useSendReminderDigest = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendReminderDigest>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof sendReminderDigest>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getSendReminderDigestMutationOptions(options));
+};
+
+/**
+ * @summary Preview pending reminder counts for the digest
+ */
+export const getGetReminderDigestPreviewUrl = () => {
+  return `/api/notifications/reminder-digest-preview`;
+};
+
+export const getReminderDigestPreview = async (
+  options?: RequestInit,
+): Promise<DigestPreview> => {
+  return customFetch<DigestPreview>(getGetReminderDigestPreviewUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetReminderDigestPreviewQueryKey = () => {
+  return [`/api/notifications/reminder-digest-preview`] as const;
+};
+
+export const getGetReminderDigestPreviewQueryOptions = <
+  TData = Awaited<ReturnType<typeof getReminderDigestPreview>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getReminderDigestPreview>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetReminderDigestPreviewQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getReminderDigestPreview>>
+  > = ({ signal }) => getReminderDigestPreview({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getReminderDigestPreview>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetReminderDigestPreviewQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getReminderDigestPreview>>
+>;
+export type GetReminderDigestPreviewQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Preview pending reminder counts for the digest
+ */
+
+export function useGetReminderDigestPreview<
+  TData = Awaited<ReturnType<typeof getReminderDigestPreview>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getReminderDigestPreview>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetReminderDigestPreviewQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

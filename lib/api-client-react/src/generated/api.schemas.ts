@@ -36,6 +36,20 @@ export interface Application {
   url?: string | null;
 }
 
+export interface DigestResult {
+  sent: boolean;
+  reminderCount: number;
+  error?: string | null;
+}
+
+export interface DigestPreview {
+  pendingCount: number;
+  overdueCount: number;
+  digestSchedule: string;
+  emailConfigured: boolean;
+  notifyEmail?: string | null;
+}
+
 export interface Reminder {
   id: number;
   applicationId: number;

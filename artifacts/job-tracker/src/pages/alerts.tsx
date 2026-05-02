@@ -5,13 +5,15 @@ import {
   useDeleteAlert,
   useGetEmailConfig,
   useSendTestEmail,
+  useSendReminderDigest,
+  useGetReminderDigestPreview,
   getListAlertsQueryKey,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BellRing, Plus, Trash2, Search, Briefcase, MapPin, Mail, CheckCircle2, Info, Send } from "lucide-react";
+import { BellRing, Trash2, Search, Briefcase, MapPin, Mail, CheckCircle2, Info, Send, Bell, Clock, AlertTriangle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -56,6 +58,22 @@ export default function JobAlerts() {
           toast({ title: "Test email sent!", description: data.message });
         } else {
           toast({ title: "Email not sent", description: data.message, variant: "destructive" });
+        }
+      }
+    }
+  });
+
+  const { data: digestPreview } = useGetReminderDigestPreview({ query: { refetchInterval: 30000 } });
+
+  const sendDigest = useSendReminderDigest({
+    mutation: {
+      onSuccess: (data) => {
+        if (data.sent) {
+          toast({ title: "Digest sent!", description: `${data.reminderCount} reminder${data.reminderCount !== 1 ? "s" : ""} included.` });
+        } else if (data.reminderCount === 0) {
+          toast({ title: "Nothing to send", description: "No pending reminders due today or tomorrow." });
+        } else {
+          toast({ title: "Digest failed", description: data.error ?? "Could not send email.", variant: "destructive" });
         }
       }
     }
@@ -170,6 +188,70 @@ export default function JobAlerts() {
                 <Send className="h-3.5 w-3.5 mr-2" />
                 {!emailConfig?.configured ? "SMTP_NOT_CONFIGURED" : sendTest.isPending ? "SENDING..." : "SEND_TEST"}
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Reminder Digest Card */}
+          <Card className="border-primary/20 shadow-[0_0_12px_rgba(var(--primary),0.06)]">
+            <CardHeader className="pb-3 border-b border-border">
+              <CardTitle className="font-mono text-sm uppercase flex items-center gap-2">
+                <Bell className="h-4 w-4 text-primary" /> REMINDER_DIGEST
+              </CardTitle>
+              <CardDescription className="text-xs">Daily email at 08:00 with all pending follow-ups.</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4 space-y-4">
+              {/* Schedule info */}
+              <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground bg-secondary/40 rounded-md px-3 py-2">
+                <Clock className="h-3.5 w-3.5 shrink-0" />
+                <span>Scheduled: <span className="text-foreground font-bold">08:00 daily</span></span>
+              </div>
+
+              {/* Live stats */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-md border border-border bg-card p-3 text-center">
+                  <div className="text-2xl font-bold font-mono text-primary">
+                    {digestPreview?.pendingCount ?? "—"}
+                  </div>
+                  <div className="text-[10px] font-mono text-muted-foreground mt-0.5">PENDING</div>
+                </div>
+                <div className={`rounded-md border p-3 text-center ${(digestPreview?.overdueCount ?? 0) > 0 ? "border-destructive/30 bg-destructive/5" : "border-border bg-card"}`}>
+                  <div className={`text-2xl font-bold font-mono ${(digestPreview?.overdueCount ?? 0) > 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                    {digestPreview?.overdueCount ?? "—"}
+                  </div>
+                  <div className="text-[10px] font-mono text-muted-foreground mt-0.5 flex items-center justify-center gap-1">
+                    {(digestPreview?.overdueCount ?? 0) > 0 && <AlertTriangle className="h-2.5 w-2.5 text-destructive" />}
+                    OVERDUE
+                  </div>
+                </div>
+              </div>
+
+              {/* Notify email display */}
+              {digestPreview?.notifyEmail && (
+                <div className="text-xs font-mono text-muted-foreground bg-secondary/30 rounded px-2 py-1.5 flex items-center gap-2">
+                  <Mail className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{digestPreview.notifyEmail}</span>
+                </div>
+              )}
+
+              {/* Send now button */}
+              <Button
+                className="w-full font-mono text-xs"
+                disabled={sendDigest.isPending || !emailConfig?.configured}
+                onClick={() => sendDigest.mutate({})}
+              >
+                <Send className="h-3.5 w-3.5 mr-2" />
+                {!emailConfig?.configured
+                  ? "SMTP_NOT_CONFIGURED"
+                  : sendDigest.isPending
+                  ? "SENDING_DIGEST..."
+                  : `SEND_NOW${digestPreview?.pendingCount ? ` (${digestPreview.pendingCount})` : ""}`}
+              </Button>
+
+              {!emailConfig?.configured && (
+                <p className="text-[11px] text-muted-foreground text-center font-mono leading-relaxed">
+                  Set SMTP_HOST, SMTP_USER, SMTP_PASS, and NOTIFY_EMAIL in Secrets to enable
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>

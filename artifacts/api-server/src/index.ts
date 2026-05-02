@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { startAlertScheduler } from "./lib/alert-scanner";
+import { startReminderDigestScheduler } from "./lib/reminder-digest";
 
 const rawPort = process.env["PORT"];
 
@@ -24,4 +25,5 @@ app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
   startAlertScheduler();
+  startReminderDigestScheduler();
 });

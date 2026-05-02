@@ -114,6 +114,32 @@ paths:
                 items:
                   $ref: "#/components/schemas/Application"
 
+  /notifications/send-reminder-digest:
+    post:
+      operationId: sendReminderDigest
+      tags: [notifications]
+      summary: Manually trigger the reminder email digest
+      responses:
+        "200":
+          description: Digest result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DigestResult"
+
+  /notifications/reminder-digest-preview:
+    get:
+      operationId: getReminderDigestPreview
+      tags: [notifications]
+      summary: Preview pending reminder counts for the digest
+      responses:
+        "200":
+          description: Digest preview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DigestPreview"
+
   /reminders:
     get:
       operationId: listReminders
@@ -672,6 +698,34 @@ components:
         - appliedAt
         - updatedAt
         - isScam
+
+    DigestResult:
+      type: object
+      properties:
+        sent:
+          type: boolean
+        reminderCount:
+          type: integer
+        error:
+          type: string
+          nullable: true
+      required: [sent, reminderCount]
+
+    DigestPreview:
+      type: object
+      properties:
+        pendingCount:
+          type: integer
+        overdueCount:
+          type: integer
+        digestSchedule:
+          type: string
+        emailConfigured:
+          type: boolean
+        notifyEmail:
+          type: string
+          nullable: true
+      required: [pendingCount, overdueCount, digestSchedule, emailConfigured]
 
     Reminder:
       type: object

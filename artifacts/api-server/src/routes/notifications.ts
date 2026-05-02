@@ -3,6 +3,7 @@ import { db, notificationsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { getEmailConfig, sendEmail } from "../lib/email";
 import { scanAlerts } from "../lib/alert-scanner";
+import { sendReminderDigest } from "../lib/reminder-digest";
 
 const router = Router();
 
@@ -85,6 +86,38 @@ router.post("/notifications/send-test-email", async (req, res) => {
 router.post("/notifications/scan", async (_req, res) => {
   const result = await scanAlerts();
   res.json(result);
+});
+
+router.post("/notifications/send-reminder-digest", async (_req, res) => {
+  const result = await sendReminderDigest();
+  res.json(result);
+});
+
+router.get("/notifications/reminder-digest-preview", async (_req, res) => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(23, 59, 59, 999);
+
+  const { db, remindersTable } = await import("@workspace/db");
+  const { lte, eq, and } = await import("drizzle-orm");
+
+  const rows = await db
+    .select({ id: remindersTable.id })
+    .from(remindersTable)
+    .where(and(eq(remindersTable.done, false), lte(remindersTable.dueAt, tomorrow)));
+
+  const overdueRows = await db
+    .select({ id: remindersTable.id })
+    .from(remindersTable)
+    .where(and(eq(remindersTable.done, false), lte(remindersTable.dueAt, new Date())));
+
+  res.json({
+    pendingCount: rows.length,
+    overdueCount: overdueRows.length,
+    digestSchedule: "08:00 daily",
+    emailConfigured: getEmailConfig().configured,
+    notifyEmail: getEmailConfig().notifyEmail,
+  });
 });
 
 export default router;

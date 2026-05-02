@@ -104,6 +104,26 @@ export const GetRecentActivityResponse = zod.array(
 );
 
 /**
+ * @summary Manually trigger the reminder email digest
+ */
+export const SendReminderDigestResponse = zod.object({
+  sent: zod.boolean(),
+  reminderCount: zod.number(),
+  error: zod.string().nullish(),
+});
+
+/**
+ * @summary Preview pending reminder counts for the digest
+ */
+export const GetReminderDigestPreviewResponse = zod.object({
+  pendingCount: zod.number(),
+  overdueCount: zod.number(),
+  digestSchedule: zod.string(),
+  emailConfigured: zod.boolean(),
+  notifyEmail: zod.string().nullish(),
+});
+
+/**
  * @summary List upcoming (and optionally done) reminders
  */
 export const ListRemindersQueryParams = zod.object({
