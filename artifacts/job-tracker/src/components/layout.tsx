@@ -2,17 +2,29 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { LayoutDashboard, Briefcase, BellRing, ShieldAlert, Search, Plus, ActivitySquare, Bell, X, Check, CheckCheck, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useHealthCheck, useListNotifications, useMarkNotificationRead, useClearNotifications, getListNotificationsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { CommandPalette } from "@/components/command-palette";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { data: health } = useHealthCheck();
   const [notifOpen, setNotifOpen] = useState(false);
+  const [cmdOpen, setCmdOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setCmdOpen((o) => !o);
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, []);
 
   const { data: notifications } = useListNotifications({ unreadOnly: false }, {
     query: { refetchInterval: 30000 }
@@ -110,13 +122,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* Top Header */}
         <header className="h-16 border-b border-border bg-card/80 backdrop-blur-sm flex items-center justify-between px-6 shrink-0 relative z-10">
           <div className="flex items-center gap-4 flex-1">
-            <div className="relative w-full max-w-md hidden md:flex">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search records..."
-                className="pl-9 bg-secondary/50 border-border font-mono text-sm h-9 w-full focus-visible:ring-1 transition-colors hover:bg-secondary focus:bg-background"
-              />
-            </div>
+            <button
+              onClick={() => setCmdOpen(true)}
+              className="hidden md:flex items-center gap-2 w-full max-w-md h-9 px-3 rounded-md bg-secondary/50 border border-border text-muted-foreground text-sm font-mono hover:bg-secondary hover:border-border/80 hover:text-foreground transition-all group"
+            >
+              <Search className="h-4 w-4 shrink-0" />
+              <span className="flex-1 text-left text-muted-foreground/70">Search records...</span>
+              <span className="flex items-center gap-0.5 shrink-0">
+                <kbd className="px-1.5 py-0.5 text-[10px] rounded bg-background/60 border border-border/60 text-muted-foreground/60 group-hover:border-border group-hover:text-muted-foreground transition-colors">⌘</kbd>
+                <kbd className="px-1.5 py-0.5 text-[10px] rounded bg-background/60 border border-border/60 text-muted-foreground/60 group-hover:border-border group-hover:text-muted-foreground transition-colors">K</kbd>
+              </span>
+            </button>
           </div>
 
           <div className="flex items-center gap-2" ref={panelRef}>
@@ -237,6 +253,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
+
+      <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
     </div>
   );
 }
