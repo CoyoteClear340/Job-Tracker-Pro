@@ -1,0 +1,107 @@
+# Automated Job & Internship Tracker
+
+## Overview  
+A web-based platform that automatically tracks job and internship applications by integrating with Gmail. The system focuses on **seamless Gmail synchronization** to detect application-related emails, extract relevant details, update application status, and present everything through a **modern, intuitive UI dashboard**.
+
+---
+
+## Core Features  
+
+### 1. Gmail Sync (Core Feature)  
+- Secure Gmail integration via OAuth 2.0  
+- Continuous syncing of inbox to detect application-related emails  
+- Automatically processes incoming emails in near real-time  
+- Acts as the primary source for tracking all applications  
+
+### 2. Automatic Application Tracking  
+- Detect emails like “application received” or “thank you for applying”  
+- Extract: company, role, date, source  
+- Auto-create application entries with minimal user input  
+
+### 3. Status Detection  
+- Automatically update application status based on email content:  
+  - Applied  
+  - Interview  
+  - Rejected  
+  - Offer  
+- Built using rule-based parsing, extendable to NLP  
+
+### 4. Modern Dashboard UI  
+- Clean and responsive interface built with modern UI principles  
+- Visual lifecycle tracking of each application  
+- Easy editing, filtering, and note management  
+- Designed for clarity, speed, and minimal friction  
+
+### 5. Reminders & Ghosting Detection  
+- Detect inactivity and mark applications as “ghosted”  
+- Automated follow-up reminders  
+- Background workflows handle scheduling  
+
+### 6. Scam Detection  
+- Identify suspicious emails where users receive **OA/interview links without applying**  
+- Flag potential scam entries using rule-based checks and external signals  
+- Display warnings directly in the dashboard  
+
+### 7. Job Alerts (Early Applicant Advantage)  
+- Users define preferences (company, role, location)  
+- Monitor career pages continuously  
+- Send instant notifications when matching jobs are posted  
+- Helps users apply early and improve chances  
+
+---
+
+## Tech Stack  
+
+### Frontend  
+- Next.js (React)  
+- Tailwind CSS / Shadcn UI  
+
+### Backend  
+- Node.js + Express (or Next.js API routes)  
+- REST APIs  
+
+### Database  
+- PostgreSQL  
+- Prisma ORM  
+
+### Authentication  
+- OAuth 2.0 (Google Sign-In)  
+
+### Email Integration  
+- Gmail API (read-only scope)  
+- Polling (cron) or push-based syncing  
+
+### Background Processing  
+- Inngest / Node Cron jobs  
+
+### Parsing & Intelligence  
+- Regex-based parsing  
+- Optional NLP for advanced classification  
+
+---
+
+## Implementation Flow  
+
+1. User connects Gmail → OAuth authentication  
+2. Gmail sync continuously fetches new emails  
+3. System filters and parses application-related emails  
+4. Application data is stored and updated in database  
+5. Dashboard reflects real-time status and progress  
+6. Background jobs handle reminders and ghost detection  
+7. Job alert system monitors career pages and notifies users  
+
+---
+
+## Key Design Considerations  
+
+- Gmail sync as the **single source of truth**  
+- Avoid duplicates using email/message IDs  
+- Ensure user privacy with minimal data storage  
+- Allow manual overrides for flexibility  
+- Focus on **modern UI/UX for better usability**  
+
+---
+
+## Outcome  
+
+A smart, automated job tracking platform centered around **Gmail synchronization and modern UI**, reducing manual effort, detecting suspicious job communications, and helping users stay ahead with real-time job alerts.

@@ -3,20 +3,25 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Job & Internship Tracker API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: applications
+    description: Job application operations
+  - name: gmail
+    description: Gmail sync operations
+  - name: alerts
+    description: Job alert operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +29,242 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /applications:
+    get:
+      operationId: listApplications
+      tags: [applications]
+      summary: List all job applications
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [applied, interview, offer, rejected, ghosted]
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: source
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Application"
+    post:
+      operationId: createApplication
+      tags: [applications]
+      summary: Create a new job application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateApplicationBody"
+      responses:
+        "201":
+          description: Created application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+
+  /applications/stats:
+    get:
+      operationId: getApplicationStats
+      tags: [applications]
+      summary: Get application statistics by status
+      responses:
+        "200":
+          description: Application stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationStats"
+
+  /applications/recent:
+    get:
+      operationId: getRecentActivity
+      tags: [applications]
+      summary: Get recent application activity
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Application"
+
+  /applications/{id}:
+    get:
+      operationId: getApplication
+      tags: [applications]
+      summary: Get a single application
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "404":
+          description: Not found
+    put:
+      operationId: updateApplication
+      tags: [applications]
+      summary: Update an application
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateApplicationBody"
+      responses:
+        "200":
+          description: Updated application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+    delete:
+      operationId: deleteApplication
+      tags: [applications]
+      summary: Delete an application
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /applications/{id}/notes:
+    post:
+      operationId: addApplicationNote
+      tags: [applications]
+      summary: Add a note to an application
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddNoteBody"
+      responses:
+        "200":
+          description: Updated application with note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+
+  /gmail/sync:
+    post:
+      operationId: triggerGmailSync
+      tags: [gmail]
+      summary: Trigger Gmail sync to detect new application emails
+      responses:
+        "200":
+          description: Sync result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GmailSyncResult"
+
+  /gmail/status:
+    get:
+      operationId: getGmailSyncStatus
+      tags: [gmail]
+      summary: Get Gmail sync connection status
+      responses:
+        "200":
+          description: Gmail sync status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GmailSyncStatus"
+
+  /alerts:
+    get:
+      operationId: listAlerts
+      tags: [alerts]
+      summary: List job alerts
+      responses:
+        "200":
+          description: List of alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JobAlert"
+    post:
+      operationId: createAlert
+      tags: [alerts]
+      summary: Create a job alert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAlertBody"
+      responses:
+        "201":
+          description: Created alert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobAlert"
+
+  /alerts/{id}:
+    delete:
+      operationId: deleteAlert
+      tags: [alerts]
+      summary: Delete a job alert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +275,224 @@ components:
       required:
         - status
 
+    Application:
+      type: object
+      properties:
+        id:
+          type: integer
+        company:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+          enum: [applied, interview, offer, rejected, ghosted]
+        source:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        appliedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        notes:
+          type: string
+          nullable: true
+        isScam:
+          type: boolean
+        scamReason:
+          type: string
+          nullable: true
+        emailMessageId:
+          type: string
+          nullable: true
+        url:
+          type: string
+          nullable: true
+      required:
+        - id
+        - company
+        - role
+        - status
+        - appliedAt
+        - updatedAt
+        - isScam
+
+    CreateApplicationBody:
+      type: object
+      properties:
+        company:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+          enum: [applied, interview, offer, rejected, ghosted]
+          default: applied
+        source:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        url:
+          type: string
+          nullable: true
+        appliedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - company
+        - role
+
+    UpdateApplicationBody:
+      type: object
+      properties:
+        company:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+          enum: [applied, interview, offer, rejected, ghosted]
+        source:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        url:
+          type: string
+          nullable: true
+        isScam:
+          type: boolean
+        scamReason:
+          type: string
+          nullable: true
+
+    AddNoteBody:
+      type: object
+      properties:
+        notes:
+          type: string
+      required:
+        - notes
+
+    ApplicationStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        applied:
+          type: integer
+        interview:
+          type: integer
+        offer:
+          type: integer
+        rejected:
+          type: integer
+        ghosted:
+          type: integer
+        responseRate:
+          type: number
+        thisWeek:
+          type: integer
+        thisMonth:
+          type: integer
+      required:
+        - total
+        - applied
+        - interview
+        - offer
+        - rejected
+        - ghosted
+        - responseRate
+        - thisWeek
+        - thisMonth
+
+    GmailSyncResult:
+      type: object
+      properties:
+        synced:
+          type: integer
+        newApplications:
+          type: integer
+        updatedApplications:
+          type: integer
+        flaggedScams:
+          type: integer
+        connected:
+          type: boolean
+        message:
+          type: string
+      required:
+        - synced
+        - newApplications
+        - updatedApplications
+        - flaggedScams
+        - connected
+        - message
+
+    GmailSyncStatus:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        lastSyncAt:
+          type: string
+          format: date-time
+          nullable: true
+        totalEmailsProcessed:
+          type: integer
+      required:
+        - connected
+        - totalEmailsProcessed
+
+    JobAlert:
+      type: object
+      properties:
+        id:
+          type: integer
+        keyword:
+          type: string
+        company:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - keyword
+        - active
+        - createdAt
+
+    CreateAlertBody:
+      type: object
+      properties:
+        keyword:
+          type: string
+        company:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+      required:
+        - keyword
