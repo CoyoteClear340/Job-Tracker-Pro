@@ -36,6 +36,38 @@ export interface Application {
   url?: string | null;
 }
 
+export type BulkActionBodyAction =
+  (typeof BulkActionBodyAction)[keyof typeof BulkActionBodyAction];
+
+export const BulkActionBodyAction = {
+  updateStatus: "updateStatus",
+  markScam: "markScam",
+  delete: "delete",
+} as const;
+
+export type BulkActionBodyStatus =
+  | (typeof BulkActionBodyStatus)[keyof typeof BulkActionBodyStatus]
+  | null;
+
+export const BulkActionBodyStatus = {
+  applied: "applied",
+  interview: "interview",
+  offer: "offer",
+  rejected: "rejected",
+  ghosted: "ghosted",
+} as const;
+
+export interface BulkActionBody {
+  ids: number[];
+  action: BulkActionBodyAction;
+  status?: BulkActionBodyStatus;
+}
+
+export interface BulkActionResult {
+  affected: number;
+  action: string;
+}
+
 export interface MonthBucket {
   month: string;
   applied: number;

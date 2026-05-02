@@ -114,6 +114,25 @@ paths:
                 items:
                   $ref: "#/components/schemas/Application"
 
+  /applications/bulk:
+    post:
+      operationId: bulkUpdateApplications
+      tags: [applications]
+      summary: Bulk update, mark scam, or delete applications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkActionBody"
+      responses:
+        "200":
+          description: Bulk action result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkActionResult"
+
   /analytics:
     get:
       operationId: getAnalytics
@@ -574,6 +593,31 @@ components:
         - appliedAt
         - updatedAt
         - isScam
+
+    BulkActionBody:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+        action:
+          type: string
+          enum: [updateStatus, markScam, delete]
+        status:
+          type: string
+          enum: [applied, interview, offer, rejected, ghosted]
+          nullable: true
+      required: [ids, action]
+
+    BulkActionResult:
+      type: object
+      properties:
+        affected:
+          type: integer
+        action:
+          type: string
+      required: [affected, action]
 
     MonthBucket:
       type: object

@@ -22,6 +22,8 @@ import type {
   AppNotification,
   Application,
   ApplicationStats,
+  BulkActionBody,
+  BulkActionResult,
   CreateAlertBody,
   CreateApplicationBody,
   CreateScamRuleBody,
@@ -482,6 +484,92 @@ export function useGetRecentActivity<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Bulk update, mark scam, or delete applications
+ */
+export const getBulkUpdateApplicationsUrl = () => {
+  return `/api/applications/bulk`;
+};
+
+export const bulkUpdateApplications = async (
+  bulkActionBody: BulkActionBody,
+  options?: RequestInit,
+): Promise<BulkActionResult> => {
+  return customFetch<BulkActionResult>(getBulkUpdateApplicationsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(bulkActionBody),
+  });
+};
+
+export const getBulkUpdateApplicationsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof bulkUpdateApplications>>,
+    TError,
+    { data: BodyType<BulkActionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof bulkUpdateApplications>>,
+  TError,
+  { data: BodyType<BulkActionBody> },
+  TContext
+> => {
+  const mutationKey = ["bulkUpdateApplications"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof bulkUpdateApplications>>,
+    { data: BodyType<BulkActionBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return bulkUpdateApplications(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type BulkUpdateApplicationsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof bulkUpdateApplications>>
+>;
+export type BulkUpdateApplicationsMutationBody = BodyType<BulkActionBody>;
+export type BulkUpdateApplicationsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Bulk update, mark scam, or delete applications
+ */
+export const useBulkUpdateApplications = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof bulkUpdateApplications>>,
+    TError,
+    { data: BodyType<BulkActionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof bulkUpdateApplications>>,
+  TError,
+  { data: BodyType<BulkActionBody> },
+  TContext
+> => {
+  return useMutation(getBulkUpdateApplicationsMutationOptions(options));
+};
 
 /**
  * @summary Get aggregated analytics data for charts

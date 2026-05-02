@@ -104,6 +104,22 @@ export const GetRecentActivityResponse = zod.array(
 );
 
 /**
+ * @summary Bulk update, mark scam, or delete applications
+ */
+export const BulkUpdateApplicationsBody = zod.object({
+  ids: zod.array(zod.number()),
+  action: zod.enum(["updateStatus", "markScam", "delete"]),
+  status: zod
+    .enum(["applied", "interview", "offer", "rejected", "ghosted"])
+    .nullish(),
+});
+
+export const BulkUpdateApplicationsResponse = zod.object({
+  affected: zod.number(),
+  action: zod.string(),
+});
+
+/**
  * @summary Get aggregated analytics data for charts
  */
 export const GetAnalyticsResponse = zod.object({

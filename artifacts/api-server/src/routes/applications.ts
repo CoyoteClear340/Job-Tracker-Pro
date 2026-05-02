@@ -65,6 +65,50 @@ router.post("/applications", async (req, res) => {
   res.status(201).json(formatApplication(app));
 });
 
+router.post("/applications/bulk", async (req, res) => {
+  const { ids, action, status } = req.body as { ids: number[]; action: string; status?: string };
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    res.status(400).json({ error: "ids must be a non-empty array" });
+    return;
+  }
+
+  const idList = ids.map(Number).filter(Boolean);
+
+  if (action === "updateStatus") {
+    const validStatuses = ["applied", "interview", "offer", "rejected", "ghosted"];
+    if (!status || !validStatuses.includes(status)) {
+      res.status(400).json({ error: "Valid status required for updateStatus" });
+      return;
+    }
+    await db
+      .update(applicationsTable)
+      .set({ status: status as "applied" | "interview" | "offer" | "rejected" | "ghosted", updatedAt: new Date() })
+      .where(sql`${applicationsTable.id} = ANY(${idList})`);
+    res.json({ affected: idList.length, action });
+    return;
+  }
+
+  if (action === "markScam") {
+    await db
+      .update(applicationsTable)
+      .set({ isScam: true, updatedAt: new Date() })
+      .where(sql`${applicationsTable.id} = ANY(${idList})`);
+    res.json({ affected: idList.length, action });
+    return;
+  }
+
+  if (action === "delete") {
+    await db
+      .delete(applicationsTable)
+      .where(sql`${applicationsTable.id} = ANY(${idList})`);
+    res.json({ affected: idList.length, action });
+    return;
+  }
+
+  res.status(400).json({ error: "Unknown action" });
+});
+
 router.get("/applications/stats", async (_req, res) => {
   const apps = await db.select().from(applicationsTable);
 
