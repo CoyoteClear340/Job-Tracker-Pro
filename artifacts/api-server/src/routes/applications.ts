@@ -139,6 +139,45 @@ router.get("/applications/needs-attention", async (req, res) => {
   );
 });
 
+router.get("/applications/export", async (req, res) => {
+  const apps = await db
+    .select()
+    .from(applicationsTable)
+    .orderBy(desc(applicationsTable.appliedAt));
+
+  const escape = (v: unknown) => {
+    if (v == null) return "";
+    const s = String(v);
+    if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+      return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
+  };
+
+  const headers = ["ID", "Company", "Role", "Status", "Source", "Location", "Applied At", "Updated At", "Is Scam", "Scam Reason", "URL", "Notes"];
+  const rows = apps.map((a) => [
+    a.id,
+    a.company,
+    a.role,
+    a.status,
+    a.source ?? "",
+    a.location ?? "",
+    a.appliedAt.toISOString(),
+    a.updatedAt.toISOString(),
+    a.isScam ? "YES" : "NO",
+    a.scamReason ?? "",
+    a.url ?? "",
+    a.notes ?? "",
+  ]);
+
+  const csv = [headers, ...rows].map((row) => row.map(escape).join(",")).join("\n");
+
+  const filename = `term_track_export_${new Date().toISOString().slice(0, 10)}.csv`;
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.send(csv);
+});
+
 router.get("/applications/:id", async (req, res) => {
   const params = GetApplicationParams.safeParse({ id: Number(req.params.id) });
   if (!params.success) {
