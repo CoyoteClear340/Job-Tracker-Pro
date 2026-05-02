@@ -18,20 +18,25 @@ import type {
 
 import type {
   AddNoteBody,
+  AppNotification,
   Application,
   ApplicationStats,
   CreateAlertBody,
   CreateApplicationBody,
   CreateScamRuleBody,
+  EmailConfigStatus,
   GetRecentActivityParams,
   GmailSyncResult,
   GmailSyncStatus,
   HealthStatus,
   JobAlert,
   ListApplicationsParams,
+  ListNotificationsParams,
   MarkScamBody,
   ScamRule,
   ScanResult,
+  SendTestEmail200,
+  SendTestEmailBody,
   UpdateApplicationBody,
   UpdateScamRuleBody,
 } from "./api.schemas";
@@ -1220,6 +1225,429 @@ export const useDeleteAlert = <
 > => {
   return useMutation(getDeleteAlertMutationOptions(options));
 };
+
+/**
+ * @summary List notifications
+ */
+export const getListNotificationsUrl = (params?: ListNotificationsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/notifications?${stringifiedParams}`
+    : `/api/notifications`;
+};
+
+export const listNotifications = async (
+  params?: ListNotificationsParams,
+  options?: RequestInit,
+): Promise<AppNotification[]> => {
+  return customFetch<AppNotification[]>(getListNotificationsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListNotificationsQueryKey = (
+  params?: ListNotificationsParams,
+) => {
+  return [`/api/notifications`, ...(params ? [params] : [])] as const;
+};
+
+export const getListNotificationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listNotifications>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListNotificationsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listNotifications>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListNotificationsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listNotifications>>
+  > = ({ signal }) => listNotifications(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listNotifications>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListNotificationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listNotifications>>
+>;
+export type ListNotificationsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List notifications
+ */
+
+export function useListNotifications<
+  TData = Awaited<ReturnType<typeof listNotifications>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListNotificationsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listNotifications>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListNotificationsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Mark a notification as read
+ */
+export const getMarkNotificationReadUrl = (id: number) => {
+  return `/api/notifications/${id}/read`;
+};
+
+export const markNotificationRead = async (
+  id: number,
+  options?: RequestInit,
+): Promise<AppNotification> => {
+  return customFetch<AppNotification>(getMarkNotificationReadUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getMarkNotificationReadMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markNotificationRead>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof markNotificationRead>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["markNotificationRead"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof markNotificationRead>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return markNotificationRead(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MarkNotificationReadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof markNotificationRead>>
+>;
+
+export type MarkNotificationReadMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Mark a notification as read
+ */
+export const useMarkNotificationRead = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markNotificationRead>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof markNotificationRead>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getMarkNotificationReadMutationOptions(options));
+};
+
+/**
+ * @summary Clear all read notifications
+ */
+export const getClearNotificationsUrl = () => {
+  return `/api/notifications/clear`;
+};
+
+export const clearNotifications = async (
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getClearNotificationsUrl(), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getClearNotificationsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof clearNotifications>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof clearNotifications>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["clearNotifications"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof clearNotifications>>,
+    void
+  > = () => {
+    return clearNotifications(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ClearNotificationsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof clearNotifications>>
+>;
+
+export type ClearNotificationsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Clear all read notifications
+ */
+export const useClearNotifications = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof clearNotifications>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof clearNotifications>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getClearNotificationsMutationOptions(options));
+};
+
+/**
+ * @summary Send a test email to verify SMTP config
+ */
+export const getSendTestEmailUrl = () => {
+  return `/api/notifications/send-test-email`;
+};
+
+export const sendTestEmail = async (
+  sendTestEmailBody: SendTestEmailBody,
+  options?: RequestInit,
+): Promise<SendTestEmail200> => {
+  return customFetch<SendTestEmail200>(getSendTestEmailUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(sendTestEmailBody),
+  });
+};
+
+export const getSendTestEmailMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendTestEmail>>,
+    TError,
+    { data: BodyType<SendTestEmailBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sendTestEmail>>,
+  TError,
+  { data: BodyType<SendTestEmailBody> },
+  TContext
+> => {
+  const mutationKey = ["sendTestEmail"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sendTestEmail>>,
+    { data: BodyType<SendTestEmailBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return sendTestEmail(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SendTestEmailMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sendTestEmail>>
+>;
+export type SendTestEmailMutationBody = BodyType<SendTestEmailBody>;
+export type SendTestEmailMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Send a test email to verify SMTP config
+ */
+export const useSendTestEmail = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendTestEmail>>,
+    TError,
+    { data: BodyType<SendTestEmailBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof sendTestEmail>>,
+  TError,
+  { data: BodyType<SendTestEmailBody> },
+  TContext
+> => {
+  return useMutation(getSendTestEmailMutationOptions(options));
+};
+
+/**
+ * @summary Get current email configuration status
+ */
+export const getGetEmailConfigUrl = () => {
+  return `/api/notifications/email-config`;
+};
+
+export const getEmailConfig = async (
+  options?: RequestInit,
+): Promise<EmailConfigStatus> => {
+  return customFetch<EmailConfigStatus>(getGetEmailConfigUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetEmailConfigQueryKey = () => {
+  return [`/api/notifications/email-config`] as const;
+};
+
+export const getGetEmailConfigQueryOptions = <
+  TData = Awaited<ReturnType<typeof getEmailConfig>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getEmailConfig>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetEmailConfigQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getEmailConfig>>> = ({
+    signal,
+  }) => getEmailConfig({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getEmailConfig>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetEmailConfigQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getEmailConfig>>
+>;
+export type GetEmailConfigQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get current email configuration status
+ */
+
+export function useGetEmailConfig<
+  TData = Awaited<ReturnType<typeof getEmailConfig>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getEmailConfig>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetEmailConfigQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary List all scam detection rules

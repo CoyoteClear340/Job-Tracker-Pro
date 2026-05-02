@@ -18,6 +18,8 @@ tags:
     description: Job alert operations
   - name: scam
     description: Scam detection rule operations
+  - name: notifications
+    description: In-app notification operations
 paths:
   /healthz:
     get:
@@ -266,6 +268,94 @@ paths:
       responses:
         "204":
           description: Deleted
+
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications
+      parameters:
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AppNotification"
+
+  /notifications/{id}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppNotification"
+
+  /notifications/clear:
+    delete:
+      operationId: clearNotifications
+      tags: [notifications]
+      summary: Clear all read notifications
+      responses:
+        "204":
+          description: Cleared
+
+  /notifications/send-test-email:
+    post:
+      operationId: sendTestEmail
+      tags: [notifications]
+      summary: Send a test email to verify SMTP config
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendTestEmailBody"
+      responses:
+        "200":
+          description: Result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                required:
+                  - success
+                  - message
+
+  /notifications/email-config:
+    get:
+      operationId: getEmailConfig
+      tags: [notifications]
+      summary: Get current email configuration status
+      responses:
+        "200":
+          description: Email config status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailConfigStatus"
 
   /scam-rules:
     get:
@@ -686,6 +776,56 @@ components:
         - flagged
         - cleared
         - message
+
+    AppNotification:
+      type: object
+      properties:
+        id:
+          type: integer
+        alertId:
+          type: integer
+          nullable: true
+        applicationId:
+          type: integer
+          nullable: true
+        message:
+          type: string
+        read:
+          type: boolean
+        emailSent:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - message
+        - read
+        - emailSent
+        - createdAt
+
+    SendTestEmailBody:
+      type: object
+      properties:
+        to:
+          type: string
+          format: email
+      required:
+        - to
+
+    EmailConfigStatus:
+      type: object
+      properties:
+        configured:
+          type: boolean
+        notifyEmail:
+          type: string
+          nullable: true
+        smtpHost:
+          type: string
+          nullable: true
+      required:
+        - configured
 
     MarkScamBody:
       type: object

@@ -161,6 +161,26 @@ export interface ScanResult {
   message: string;
 }
 
+export interface AppNotification {
+  id: number;
+  alertId?: number | null;
+  applicationId?: number | null;
+  message: string;
+  read: boolean;
+  emailSent: boolean;
+  createdAt: string;
+}
+
+export interface SendTestEmailBody {
+  to: string;
+}
+
+export interface EmailConfigStatus {
+  configured: boolean;
+  notifyEmail?: string | null;
+  smtpHost?: string | null;
+}
+
 export interface MarkScamBody {
   reason?: string | null;
 }
@@ -184,4 +204,13 @@ export const ListApplicationsStatus = {
 
 export type GetRecentActivityParams = {
   limit?: number;
+};
+
+export type ListNotificationsParams = {
+  unreadOnly?: boolean;
+};
+
+export type SendTestEmail200 = {
+  success: boolean;
+  message: string;
 };

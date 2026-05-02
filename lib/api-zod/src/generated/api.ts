@@ -248,6 +248,64 @@ export const DeleteAlertParams = zod.object({
 });
 
 /**
+ * @summary List notifications
+ */
+export const ListNotificationsQueryParams = zod.object({
+  unreadOnly: zod.coerce.boolean().optional(),
+});
+
+export const ListNotificationsResponseItem = zod.object({
+  id: zod.number(),
+  alertId: zod.number().nullish(),
+  applicationId: zod.number().nullish(),
+  message: zod.string(),
+  read: zod.boolean(),
+  emailSent: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+export const ListNotificationsResponse = zod.array(
+  ListNotificationsResponseItem,
+);
+
+/**
+ * @summary Mark a notification as read
+ */
+export const MarkNotificationReadParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const MarkNotificationReadResponse = zod.object({
+  id: zod.number(),
+  alertId: zod.number().nullish(),
+  applicationId: zod.number().nullish(),
+  message: zod.string(),
+  read: zod.boolean(),
+  emailSent: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Send a test email to verify SMTP config
+ */
+export const SendTestEmailBody = zod.object({
+  to: zod.string().email(),
+});
+
+export const SendTestEmailResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string(),
+});
+
+/**
+ * @summary Get current email configuration status
+ */
+export const GetEmailConfigResponse = zod.object({
+  configured: zod.boolean(),
+  notifyEmail: zod.string().nullish(),
+  smtpHost: zod.string().nullish(),
+});
+
+/**
  * @summary List all scam detection rules
  */
 export const ListScamRulesResponseItem = zod.object({

@@ -1,15 +1,17 @@
 import React, { useState } from "react";
-import { 
+import {
   useListAlerts,
   useCreateAlert,
   useDeleteAlert,
+  useGetEmailConfig,
+  useSendTestEmail,
   getListAlertsQueryKey,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BellRing, Plus, Trash2, Search, Briefcase, MapPin } from "lucide-react";
+import { BellRing, Plus, Trash2, Search, Briefcase, MapPin, Mail, CheckCircle2, Info, Send } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -17,12 +19,14 @@ import { format } from "date-fns";
 export default function JobAlerts() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
   const [keyword, setKeyword] = useState("");
   const [company, setCompany] = useState("");
   const [location, setLocation] = useState("");
+  const [testEmail, setTestEmail] = useState("");
 
   const { data: alerts, isLoading } = useListAlerts();
+  const { data: emailConfig } = useGetEmailConfig();
 
   const createAlert = useCreateAlert({
     mutation: {
@@ -45,6 +49,18 @@ export default function JobAlerts() {
     }
   });
 
+  const sendTest = useSendTestEmail({
+    mutation: {
+      onSuccess: (data) => {
+        if (data.success) {
+          toast({ title: "Test email sent!", description: data.message });
+        } else {
+          toast({ title: "Email not sent", description: data.message, variant: "destructive" });
+        }
+      }
+    }
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!keyword) return;
@@ -58,8 +74,24 @@ export default function JobAlerts() {
         <p className="text-muted-foreground font-mono text-sm mt-1">BACKGROUND_MONITORING: ACTIVE</p>
       </div>
 
+      {/* Email Config Status Banner */}
+      <div className={`flex items-start gap-3 p-4 rounded-lg border text-sm font-mono ${emailConfig?.configured ? 'border-primary/30 bg-primary/5 text-primary' : 'border-border bg-secondary/30 text-muted-foreground'}`}>
+        {emailConfig?.configured ? (
+          <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
+        ) : (
+          <Info className="h-4 w-4 mt-0.5 shrink-0" />
+        )}
+        <div className="flex-1">
+          {emailConfig?.configured ? (
+            <span>EMAIL_ALERTS: <span className="text-primary font-bold">ACTIVE</span> — notifications sending via {emailConfig.smtpHost}</span>
+          ) : (
+            <span>EMAIL_ALERTS: <span className="font-bold text-foreground/60">INACTIVE</span> — set <code className="bg-secondary px-1 rounded text-xs">SMTP_HOST</code>, <code className="bg-secondary px-1 rounded text-xs">SMTP_USER</code>, <code className="bg-secondary px-1 rounded text-xs">SMTP_PASS</code>, and <code className="bg-secondary px-1 rounded text-xs">NOTIFY_EMAIL</code> in Secrets to enable email alerts</span>
+          )}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-4">
           <Card className="border-primary/20 shadow-[0_0_15px_rgba(var(--primary),0.05)]">
             <CardHeader>
               <CardTitle className="font-mono text-sm uppercase flex items-center gap-2">
@@ -73,11 +105,11 @@ export default function JobAlerts() {
                   <label className="text-xs font-mono font-medium">KEYWORD *</label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                    <Input 
-                      required 
-                      value={keyword} 
-                      onChange={e => setKeyword(e.target.value)} 
-                      placeholder="e.g. Frontend Engineer" 
+                    <Input
+                      required
+                      value={keyword}
+                      onChange={e => setKeyword(e.target.value)}
+                      placeholder="e.g. Frontend Engineer"
                       className="pl-9 font-mono text-sm bg-secondary/50"
                     />
                   </div>
@@ -86,10 +118,10 @@ export default function JobAlerts() {
                   <label className="text-xs font-mono font-medium">COMPANY (OPTIONAL)</label>
                   <div className="relative">
                     <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                    <Input 
-                      value={company} 
-                      onChange={e => setCompany(e.target.value)} 
-                      placeholder="e.g. Stripe" 
+                    <Input
+                      value={company}
+                      onChange={e => setCompany(e.target.value)}
+                      placeholder="e.g. Stripe"
                       className="pl-9 font-mono text-sm bg-secondary/50"
                     />
                   </div>
@@ -98,10 +130,10 @@ export default function JobAlerts() {
                   <label className="text-xs font-mono font-medium">LOCATION (OPTIONAL)</label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                    <Input 
-                      value={location} 
-                      onChange={e => setLocation(e.target.value)} 
-                      placeholder="e.g. Remote, NYC" 
+                    <Input
+                      value={location}
+                      onChange={e => setLocation(e.target.value)}
+                      placeholder="e.g. Remote, NYC"
                       className="pl-9 font-mono text-sm bg-secondary/50"
                     />
                   </div>
@@ -112,11 +144,39 @@ export default function JobAlerts() {
               </form>
             </CardContent>
           </Card>
+
+          {/* Email Test Card */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="font-mono text-sm uppercase flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground" /> TEST_EMAIL
+              </CardTitle>
+              <CardDescription className="text-xs">Send a test notification to verify your SMTP setup.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                type="email"
+                value={testEmail}
+                onChange={e => setTestEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="font-mono text-sm bg-secondary/50"
+              />
+              <Button
+                variant="outline"
+                className="w-full font-mono text-xs"
+                disabled={sendTest.isPending || !testEmail || !emailConfig?.configured}
+                onClick={() => sendTest.mutate({ data: { to: testEmail } })}
+              >
+                <Send className="h-3.5 w-3.5 mr-2" />
+                {!emailConfig?.configured ? "SMTP_NOT_CONFIGURED" : sendTest.isPending ? "SENDING..." : "SEND_TEST"}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="lg:col-span-2 space-y-4">
           <h3 className="font-mono text-sm uppercase text-muted-foreground px-1">ACTIVE_MONITORS [{alerts?.length || 0}]</h3>
-          
+
           {isLoading ? (
             Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)
           ) : alerts && alerts.length > 0 ? (
@@ -137,8 +197,8 @@ export default function JobAlerts() {
                         <span>CREATED: {format(new Date(alert.createdAt), 'MM/dd/yy')}</span>
                       </div>
                     </div>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="icon"
                       className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                       onClick={() => deleteAlert.mutate({ id: alert.id })}
