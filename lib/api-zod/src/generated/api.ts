@@ -104,6 +104,39 @@ export const GetRecentActivityResponse = zod.array(
 );
 
 /**
+ * @summary Get aggregated analytics data for charts
+ */
+export const GetAnalyticsResponse = zod.object({
+  byMonth: zod.array(
+    zod.object({
+      month: zod.string(),
+      applied: zod.number(),
+      interview: zod.number(),
+      offer: zod.number(),
+      rejected: zod.number(),
+      ghosted: zod.number(),
+      total: zod.number(),
+    }),
+  ),
+  bySource: zod.array(
+    zod.object({
+      source: zod.string(),
+      count: zod.number(),
+      responseCount: zod.number(),
+    }),
+  ),
+  statusTotals: zod.object({
+    applied: zod.number(),
+    interview: zod.number(),
+    offer: zod.number(),
+    rejected: zod.number(),
+    ghosted: zod.number(),
+  }),
+  totalApplications: zod.number(),
+  overallResponseRate: zod.number(),
+});
+
+/**
  * @summary Get applications that need follow-up (stale status)
  */
 export const getNeedsAttentionQueryStaleDaysDefault = 7;

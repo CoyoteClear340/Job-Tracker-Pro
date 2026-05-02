@@ -36,6 +36,38 @@ export interface Application {
   url?: string | null;
 }
 
+export interface MonthBucket {
+  month: string;
+  applied: number;
+  interview: number;
+  offer: number;
+  rejected: number;
+  ghosted: number;
+  total: number;
+}
+
+export interface SourceBucket {
+  source: string;
+  count: number;
+  responseCount: number;
+}
+
+export type AnalyticsDataStatusTotals = {
+  applied: number;
+  interview: number;
+  offer: number;
+  rejected: number;
+  ghosted: number;
+};
+
+export interface AnalyticsData {
+  byMonth: MonthBucket[];
+  bySource: SourceBucket[];
+  statusTotals: AnalyticsDataStatusTotals;
+  totalApplications: number;
+  overallResponseRate: number;
+}
+
 export interface NeedsAttentionItem {
   id: number;
   company: string;

@@ -114,6 +114,19 @@ paths:
                 items:
                   $ref: "#/components/schemas/Application"
 
+  /analytics:
+    get:
+      operationId: getAnalytics
+      tags: [analytics]
+      summary: Get aggregated analytics data for charts
+      responses:
+        "200":
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsData"
+
   /applications/needs-attention:
     get:
       operationId: getNeedsAttention
@@ -561,6 +574,67 @@ components:
         - appliedAt
         - updatedAt
         - isScam
+
+    MonthBucket:
+      type: object
+      properties:
+        month:
+          type: string
+        applied:
+          type: integer
+        interview:
+          type: integer
+        offer:
+          type: integer
+        rejected:
+          type: integer
+        ghosted:
+          type: integer
+        total:
+          type: integer
+      required: [month, applied, interview, offer, rejected, ghosted, total]
+
+    SourceBucket:
+      type: object
+      properties:
+        source:
+          type: string
+        count:
+          type: integer
+        responseCount:
+          type: integer
+      required: [source, count, responseCount]
+
+    AnalyticsData:
+      type: object
+      properties:
+        byMonth:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthBucket"
+        bySource:
+          type: array
+          items:
+            $ref: "#/components/schemas/SourceBucket"
+        statusTotals:
+          type: object
+          properties:
+            applied:
+              type: integer
+            interview:
+              type: integer
+            offer:
+              type: integer
+            rejected:
+              type: integer
+            ghosted:
+              type: integer
+          required: [applied, interview, offer, rejected, ghosted]
+        totalApplications:
+          type: integer
+        overallResponseRate:
+          type: number
+      required: [byMonth, bySource, statusTotals, totalApplications, overallResponseRate]
 
     NeedsAttentionItem:
       type: object

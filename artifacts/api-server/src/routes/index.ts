@@ -5,6 +5,7 @@ import gmailRouter from "./gmail";
 import alertsRouter from "./alerts";
 import scamRulesRouter from "./scam-rules";
 import notificationsRouter from "./notifications";
+import analyticsRouter from "./analytics";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(gmailRouter);
 router.use(alertsRouter);
 router.use(scamRulesRouter);
 router.use(notificationsRouter);
+router.use(analyticsRouter);
 
 export default router;

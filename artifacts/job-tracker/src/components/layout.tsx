@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Briefcase, BellRing, ShieldAlert, Search, Plus, ActivitySquare, Bell, X, Check, CheckCheck } from "lucide-react";
+import { LayoutDashboard, Briefcase, BellRing, ShieldAlert, Search, Plus, ActivitySquare, Bell, X, Check, CheckCheck, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useHealthCheck, useListNotifications, useMarkNotificationRead, useClearNotifications, getListNotificationsQueryKey } from "@workspace/api-client-react";
@@ -44,6 +44,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Applications", href: "/applications", icon: Briefcase },
+    { name: "Analytics", href: "/analytics", icon: BarChart2 },
     { name: "Job Alerts", href: "/alerts", icon: BellRing, badge: unread.length },
     { name: "Scam Rules", href: "/scam-detection", icon: ShieldAlert },
   ];
