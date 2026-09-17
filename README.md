@@ -1,4 +1,4 @@
-# TERM_TRACK — Job & Internship Tracker
+#  Job & Internship Tracker
 
 A full-stack job/internship application tracker that syncs with Gmail to automatically detect application-related emails, infer status changes, flag likely scam messages, and surface everything on a fast, terminal-themed dashboard.
 
