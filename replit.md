@@ -44,15 +44,15 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 ## Gmail Integration Note
 
-Gmail OAuth integration was NOT set up (user dismissed the flow). The connector ID is:
-`connector:ccfg_google-mail_B959E7249792448ABBA58D46AF`
+`artifacts/api-server/src/lib/gmail-client.ts` now implements Gmail access via `googleapis` using a manually supplied OAuth refresh token — no Replit connector required. It's considered "configured" once these env vars are set on the API server:
 
-To enable Gmail sync in the future:
-1. Run `proposeIntegration("connector:ccfg_google-mail_B959E7249792448ABBA58D46AF")` in the integrations skill
-2. After the user completes OAuth, call `addIntegration` with the returned connection ID
-3. Copy the rendered snippet into `artifacts/api-server/src/lib/gmail-client.ts`
-4. The gmail routes in `artifacts/api-server/src/routes/gmail.ts` already import from that path dynamically
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_REFRESH_TOKEN`
+- `GOOGLE_REDIRECT_URI` (optional, defaults to `https://developers.google.com/oauthplayground`)
 
-Alternatively, the user can provide a Google OAuth refresh token + client credentials manually as secrets.
+`artifacts/api-server/src/lib/gmail-sync.ts` holds the sync logic (`syncGmail()`), fetches full message bodies (not just snippets) to extract company/role/status, and runs on a 15-minute interval scheduler (`startGmailSyncScheduler`, started from `index.ts`) in addition to the manual `POST /gmail/sync` trigger. `googleapis` is externalized in `build.mjs` so esbuild doesn't try to bundle it.
+
+The Replit connector ID (`connector:ccfg_google-mail_B959E7249792448ABBA58D46AF`) is still available as an alternative path if OAuth should be brokered through Replit instead of manual refresh-token secrets — in that case, replace the implementation in `gmail-client.ts` with the connector-issued client instead.
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.

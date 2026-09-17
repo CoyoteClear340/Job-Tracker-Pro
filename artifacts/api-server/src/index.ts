@@ -2,6 +2,7 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { startAlertScheduler } from "./lib/alert-scanner";
 import { startReminderDigestScheduler } from "./lib/reminder-digest";
+import { startGmailSyncScheduler } from "./lib/gmail-sync";
 
 const rawPort = process.env["PORT"];
 
@@ -26,4 +27,5 @@ app.listen(port, (err) => {
   logger.info({ port }, "Server listening");
   startAlertScheduler();
   startReminderDigestScheduler();
+  startGmailSyncScheduler();
 });
